@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>snake</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    
+    #background {
+        background: url(img/background3.jpg);
+        background-repeat: no-repeat;
+        width: 1440px;
+        height: 790px;
+        background-size: 100% 100%;
+        position: absolute;
+        display: block;
+    }
+    
+    #map {
+        width: 800px;
+        height: 600px;
+        border: 1px solid black;
+        position: absolute;
+        margin-left: 300px;
+        margin-top: 70px;
+        display: none;
+        /*隐藏元素，block为显示元素*/
+    }
+</style>
+
+<body>
+    <div id="background"></div>
+    <div id="map"><canvas id="can" width="800px" height="600px" position="absolute"></canvas></div>
+</body>
+<script type="text/javascript">
+    window.onload = function() {
+        var div = document.getElementsByTagName("div")[0];
+        var btn = document.createElement("button");
+        var text = document.createTextNode("开始游戏");
+        var div2 = document.getElementsByTagName("div")[1];
+        var can = document.querySelector("#can");
+        var hb = can.getContext("2d");
+        var position = 3; //运动方向默认为右
+        var time;
+
+        btn.appendChild(text);
+        //往id=background里添加新节点
+        div.appendChild(btn);
+
+        //给按钮添加css属性
+        btn.style.backgroundColor = "red";
+        btn.style.position = "absolute";
+        //btn.style.marginLeft="1000px";
+        //btn.style.marginTop="400px";
+        btn.style.width = "150px";
+        btn.style.height = "80px";
+        btn.style.borderRadius = "10%";
+        btn.style.fontSize = "25px";
+        btn.style.left = "1000px";
+        btn.style.top = "400px";
+
+
+        // mp.style.display="none";
+
+
+        //当点击开始游戏按钮时，跳转到游戏界面
+        //当为了保证只有一个html页面，所以不能采用再来一个html，只能让原来的地图界面盒子先隐藏起来，当点击开始游戏按钮时，让地图盒子显示出来
+        //同时让原来背景图片隐藏掉,但必须不影响子集元素
+        function xiantiao() {
+            for (var i = 0; i < 40; i++) {
+                hb.beginPath();
+                hb.moveTo(i * 20, 0);
+                hb.lineTo(i * 20, 600);
+                hb.stroke();
+                hb.closePath();
+            }
+
+            for (var j = 0; j < 30; j++) {
+                hb.beginPath();
+                hb.moveTo(0, j * 20);
+                hb.lineTo(800, j * 20);
+                hb.stroke();
+                hb.closePath();
+            }
+
+        }
+        btn.onclick = function() {
+            //window.location.href="http://www.baidu.com";
+            //var map=document.getElementById("map");
+            div2.style.display = "block";
+            div.style.display = "none";
+
+            /*
+            以后不采取用js添加画布，直接往html里写即可
+            //画表格,规定一个方格为20*20px,一共宽800/20=40根线，高600/20=30根线  
+            /*一共宽800/20=40根线，竖线
+            x     y
+            0     0
+            0     600
+
+            20    0
+            20    600
+
+            40    0
+            40    600
+
+            60    0
+            60    600
+            起始和终点x=20*i
+            起点和终点的y分别为0 600
+            */
+            /*
+             高600/20=30根线  横线
+             x      y
+             0      0
+             800    0
+
+             0      20
+             800    20
+
+             0      40
+             800    40
+
+             0      60
+             800    60
+             起始终点y=20*i
+             起点和终点x分别为0  800
+            */
+            xiantiao();
+
+        }
+
+
+        //初定食物的坐标为0 0
+        var food = {
+                x: "0",
+                y: "0"
+            }
+            //生成食物的函数
+        function Food() {
+            var x = parseInt(Math.random() * 40 + 1);
+            var y = parseInt(Math.random() * 30 + 1); //生成随机数
+            food.x = x; //将生成的随机数分别赋值给食物的坐标
+            food.y = y;
+            hb.beginPath();
+            hb.fillStyle = "yellow";
+            hb.fillRect(food.x * 20, food.y * 20, 20, 20);
+            //hb.arc(food.x*20,food.y*20,10,0,Math.PI*2,false);//20的倍数
+            hb.fill();
+            hb.closePath();
+        }
+        Food();
+
+        //存放蛇的初始位置
+        var snake = [
+            [20, 20],
+            [40, 20],
+            [60, 20],
+            [80, 20]
+        ];
+        //生成蛇的函数
+        function Snake() {
+            //蛇身
+            for (let i = 0; i < snake.length - 1; i++) {
+                hb.beginPath();
+                hb.fillStyle = "blue";
+                hb.fillRect(snake[i][0], snake[i][1], 20, 20);
+                hb.fill();
+                hb.closePath();
+            }
+            //蛇头
+            hb.beginPath();
+            hb.fillStyle = "red";
+            /* switch (position) {
+                 case 1: //zuo
+                     hb.fillRect(snake[snake.length - 1][0] - 20, snake[snake.length - 1][1], 20, 20);
+                     break;
+                 case 2: //shang
+                     hb.fillRect(snake[snake.length - 1][0] - 20, snake[snake.length - 1][1] - 20, 20, 20);
+                     break;
+                 case 3: //zuo
+                     hb.fillRect(snake[snake.length - 1][0], snake[snake.length - 1][1], 20, 20);
+                     break;
+                 case 4: //zuo
+                     hb.fillRect(snake[snake.length - 1][0] - 20, snake[snake.length - 1][1] + 20, 20, 20);
+                     break;
+             }*/
+            //hb.arc(snake[snake.length-1][0]+10,snake[snake.length-1][1]+10,10,0,Math.PI*2,false);
+            hb.fillRect(snake[snake.length - 1][0], snake[snake.length - 1][1], 20, 20);
+            hb.fill();
+            hb.closePath();
+        }
+        //Snake();
+        //定义初始函数
+
+        //判断食物被吃的函数
+        function eatfood() {
+            //分别获取食物和蛇头当前的坐标
+            if (snake[snake.length - 1][0] / 20 == food.x && snake[snake.length - 1][1] / 20 == food.y) {
+                Food(); //生成食物
+                //增加蛇的长度
+
+                /* hb.beginPath();
+                 hb.fillStyle = "blue";
+                 hb.fillRect(snake[0][0], snake[0][1], 40, 20);
+                 hb.closePath();*/
+                //snake[0][0] = snake[0][0] - 20;
+                var x = snake[0][0] - 20;
+                var y = snake[0][1];
+                var newclient2 = [x, y];
+                snake.unshift(newclient2);
+            }
+        }
+        /*console.log(food.x);
+        console.log(food.y);
+        console.log(snake[snake.length - 1][0], snake[snake.length - 1][1]);*/
+
+
+
+
+        //判断撞墙的函数
+        function zwall() {
+            if (snake[snake.length - 1][0] == 0 || snake[snake.length - 1][1] == 0 || snake[snake.length - 1][0] == 800 || snake[snake.length - 1][1] == 600) {
+                //弹出确认框，重新游戏还是返回首页
+                if (confirm("你输了，再来一局吗")) {
+                    //origin();
+                    //当按下确定时，要使蛇的数组恢复到初始化状态
+                    //清除画布所有并且重新初始化界面
+                    //或者有什么办法让当前页面重新加载，然后将封面内容隐藏，将地图界面显示出来
+                    window.location.href = window.location.href;
+                    div.style.display = "block";
+                    div2.style.display = "none";
+
+
+                } else {
+                    //window.location.href = window.location.href;
+                    div2.style.display = "block";
+                    div.style.display = "none";
+                }
+            }
+        }
+
+
+        //根据position的值来控制移动的方向
+        var ctro = function(position) {
+                clearInterval(time);
+                time = setInterval(function() {
+                    //获取蛇头方向，蛇头控制方向
+                    var x = snake[snake.length - 1][0];
+                    var y = snake[snake.length - 1][1];
+                    switch (position) {
+                        case 1: //zuo
+                            x = x - 20;
+                            break;
+                        case 2: //shang
+                            y = y - 20;
+                            break;
+                        case 3: //you
+                            x = x + 20;
+                            break;
+
+                        case 4: //xia
+                            y = y + 20;
+                            //x=x-20;
+                            break;
+                    }
+                    var newclient = [x, y]; //新坐标
+                    //增加蛇的长度，直接往结尾加上一个新数组，不用减少
+                    /*if (newclient[0] == food.x && newclient[1] == food.y) {
+                         //snake.push(newclient);不能往后面加，要加只能加在蛇身也就是数组开头位置
+                         //直接将蛇身拉长20
+                         snake[0][0] = snake[0][0] - 20;
+                         Snake();
+                         Food();
+                     } else {*/
+                    //eatfood(newclient);
+                    //插入到蛇的数组最后结尾一个位置
+                    snake.push(newclient);
+                    hb.clearRect(snake[0][0], snake[0][1], 20, 20);
+                    //删除第一个元素
+                    snake.shift();
+                    //判断是否吃到食物
+                    eatfood();
+                    Snake();
+                    xiantiao();
+                    //判断撞墙
+                    zwall();
+                    //}
+
+                    //eatfood();
+                }, 150);
+            }
+
+        function origin() {
+            Snake();
+            //Food();
+            //ctro(3);
+        }
+        origin();
+
+
+        //获取键盘按下的值函数
+        document.onkeydown = function(event, position) {
+            //console.log(event.keyCode);//左37  上38 右39 下40
+            switch (event.keyCode) {
+                case 37:
+                    position = 1;
+                    break;
+                case 38:
+                    position = 2;
+                    break; //上
+                case 39:
+                    position = 3;
+                    break; //右
+                case 40:
+                    position = 4;
+                    break;
+            }
+            //console.log(position);
+            ctro(position);
+        }
+    }
+</script>
+
+</html>
